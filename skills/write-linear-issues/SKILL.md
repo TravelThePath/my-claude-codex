@@ -102,7 +102,26 @@ Drop sub-headings that don't apply. Empty headings invite the implementer to inv
 | Migration | Needs a data migration, dual-write / dual-read phase, backfill, or careful deploy order. Pure additive schema with no backfill: skip Migration. |
 | Behavior | Changes runtime semantics: validation, authorization, side effects, error mapping, rate limits, logging contracts. |
 
-## Worked example — Add `is_archived` to accounts
+### Sizing the AC list
+
+**AC count is bounded by distinct user-facing outcomes, not by Spec row count.** A Spec with 20 row-level changes that all serve one outcome ("the rendered PDF matches the linked Figma design") is 1 AC, not 20. AC measures *what the change achieves*, not *that each Spec line was implemented*.
+
+| Ticket shape | Typical AC count | AC pattern |
+| --- | --- | --- |
+| Single behavior change (one column, one endpoint) | 2–4 | Each AC verifies a distinct user-visible behavior. |
+| Multi-row template / config / refactor with one outcome | 1–3 | Outcome-level: "X matches the design at &lt;link&gt;" + "tests pass". |
+| Multi-component feature with multiple distinct outcomes | 3–5 | One AC per distinct outcome, ladder up. |
+| Reaching 8+ ACs | — | **Smell.** You've drifted into Spec-checklist territory. Compress. |
+
+**The Spec / AC pairing contract.** When AC compresses to "matches X at &lt;link&gt;":
+
+- Spec **must** be precise enough that any failure can be attributed to a specific Spec line (row tables, exact labels, exact field names, linked design references).
+- Thick Spec + thin AC is matched: reviewer compares end-to-end, Spec pinpoints the failing row.
+- Thin Spec + thin AC is a contract gap: reviewer can't pin down "what doesn't match" — the issue isn't ready.
+
+If you find yourself wanting to compress AC but Spec is vague, fix Spec first. Don't compress AC to hide an unsettled contract.
+
+## Worked example 1 — Add `is_archived` to accounts
 
 ### ✗ Bad (sections blurred)
 
@@ -168,6 +187,53 @@ Why this works:
 - **Out of scope** items each name a destination issue — nothing rots into "TODO".
 - **AC** items are reviewer actions producing binary outcomes — none of them restate Spec, none mention "code reviewed", none use Spec verbs ("Add", "Implement").
 
+## Worked example 2 — Outcome-driven AC for a multi-row change
+
+When Spec covers many label / row / structural changes that all serve one user-facing outcome (e.g. "the rendered PDF matches the design"), AC compresses to outcome level — even though Spec is long.
+
+### ✗ Bad — AC mirrors every Spec row
+
+```markdown
+## Acceptance Criteria
+
+- [ ] Header block contains rows in order: ID, Holding, ABN, Period, Date.
+- [ ] Part A contains 5 rows in order: Name, ID, Type, TFN, Residency.
+- [ ] Part B has 16 rows in the order specified above.
+- [ ] Part B row 3 reads "Share of primary production (PP) income" with label "13L".
+- [ ] Part B row 4 reads "Other deductions relating to distributions" with label "13Y".
+- [ ] Part B row 5 reads "Share of franking credits from franked dividends" with label "13Q".
+- [ ] ... (10 more row-level checks)
+- [ ] Part C third-column header reads "Tax Paid/Offsets".
+- [ ] No "Tax Offsets (E)" sub-header appears anywhere.
+- [ ] Footer contains 4 numbered notes.
+- [ ] Footer contains "PLEASE RETAIN ..." line.
+- [ ] Snapshot test passes.
+```
+
+What went wrong:
+
+- 15+ items, but they all serve **one outcome**: "PDF matches the design". The list is a Spec checklist disguised as AC.
+- A reviewer ticks boxes mechanically without ever comparing the rendered PDF to the design end-to-end. Errors that fall *between* the listed checks (spacing, font, alignment, an unlisted row) are not caught.
+- If Spec is the source of truth (with a precise row table and a Figma link), restating each row in AC duplicates the contract.
+
+### ✓ Good — outcome-level AC backed by precise Spec
+
+```markdown
+## Acceptance Criteria
+
+- [ ] The PDF rendered from the existing snapshot fixture matches the Figma design at the three node IDs linked in Context — header, Part A, Part B, Part C, and footer all align with the design.
+- [ ] Snapshot / golden-file tests in `templates/` are updated to the new layout and pass.
+- [ ] Existing tax statement integration tests pass without modification.
+```
+
+Why this works:
+
+- 3 items. Each is a **distinct outcome**: visual match, test fixture updated, no regression elsewhere.
+- The reviewer compares the rendered output to the design end-to-end. A single mis-rendered row breaks AC #1, and Spec's row table tells them which row is wrong.
+- Thick Spec + thin AC is matched: Spec lists every row label, every reorder, every relabel; AC trusts that precision and verifies the *outcome*.
+
+This pattern only works when Spec is precise. If Spec said "update template to match design" without enumerating rows, AC #1 would be unverifiable — the reviewer couldn't pin down "what doesn't match". When you compress AC, fix Spec first.
+
 ## Quality checklist
 
 Walk this before handing off the draft.
@@ -183,6 +249,8 @@ Walk this before handing off the draft.
   - ✗ "Code is reviewed and merged." (not observable)
   - ✗ "Ensure archived accounts are hidden." (not binary)
   - ✓ "Run `SELECT is_archived FROM accounts LIMIT 1;` on staging → returns without error." (action + binary outcome)
+- **AC count tracks distinct outcomes, not Spec row count.** A 50-line Spec that all serves one outcome ("PDF matches the design") gets 1 AC, not 50. Reaching 8+ ACs is a smell — either the ticket has 8 truly distinct outcomes (acceptable) or it's a Spec-checklist in disguise (compress).
+- **Outcome-level AC requires Spec precision.** When AC says "matches design at &lt;link&gt;" or "matches Spec table above", Spec must be precise enough that any failure pinpoints a specific Spec row. If Spec is vague, fix Spec — don't compress AC to hide an unsettled contract.
 - **AC contains no `[CONFIRM]`.** Verification depends on a settled contract. If an AC is contingent on an unresolved decision, the issue isn't ready — hoist the question to Spec, resolve it, then write the AC.
 - **Unknowns are marked, not guessed.** Every assumption not in the user's input is either confirmed in chat or left as `[CONFIRM: …]` in the draft.
 
@@ -195,6 +263,7 @@ Walk this before handing off the draft.
 | Out of scope item without a destination or non-plan note | PM / triage cannot tell if the item is a future issue, an open question, or an explicit non-decision. | Append `— tracked in <issue / milestone / follow-up>` or `— not planned (<reason>)`; otherwise delete it. |
 | AC that restates Spec | A reviewer cannot tell "done" from "started"; nothing is verified. | Rewrite each AC as `<reviewer action> → <binary observable outcome>`. |
 | AC like "code is reviewed" or "tests pass" | Always true at merge time; verifies nothing specific. | Replace with the specific behavior the change adds. |
+| Writing one AC per Spec row (e.g. 20 ACs for a 20-row template change) | Reviewer mechanically ticks boxes; nobody verifies the overall outcome holds. Errors falling *between* the listed checks are missed. | Compress to user-facing outcomes ("matches design at &lt;link&gt;") and rely on Spec precision for failure attribution. |
 | `[CONFIRM:` inside an AC item | Reviewer cannot tell pass / fail when verification depends on an unresolved decision. | Resolve the decision in Spec first; AC follows the settled contract. |
 | Guessing instead of `[CONFIRM]` | Quietly fabricated assumptions ship as the spec. | Mark every unknown inline; resolve in chat. |
 | Asking the user about Out of scope unprompted | Soliciting scope worry invites scope creep. | Capture only scope items the user volunteers, plus obvious adjacent work the user named. |
@@ -211,6 +280,8 @@ If you catch yourself doing any of these, stop and rewrite the offending section
 - Writing an **AC** item that begins with "Add", "Implement", "Create", "Update" — those are Spec verbs, not verification verbs.
 - Writing `[CONFIRM:` inside an **AC** item — AC is the verification contract; an unresolved decision means the contract isn't ready. Resolve the question in Spec first, then AC follows.
 - AC items mapping 1-to-1 to Spec items (one AC per Spec line saying "X is added / created") — that's a Spec checklist, not a verification. Raw count is fine when each AC is a distinct observable.
+- AC list growing with Spec list. Adding 10 Spec rows shouldn't add 10 ACs if they all serve the same outcome. Compress to the outcome ("matches design at &lt;link&gt;") and let Spec precision do the row-level work.
+- AC reads "matches design / spec" but Spec is vague. Compressing AC without a precise Spec creates a contract gap — failure can't be pinned to a specific row. Fix Spec first, then compress AC.
 - Filling every Spec sub-heading because the template offers them.
 - Writing `No <X> changes.` or `N/A` under a Spec sub-heading instead of dropping the heading — the empty heading is the same anti-pattern, just with a defensive comment. If the section doesn't apply, delete it.
 - Asking the user "is anything else out of scope?" — you are inviting scope creep.
@@ -227,3 +298,5 @@ If you catch yourself doing any of these, stop and rewrite the offending section
 | "More sub-headings make the issue look complete." | Empty sub-headings invite the implementer to invent work or skip the section entirely. |
 | "The user is busy, I'll fill in the motivation myself." | You are now the source of record for *why* — and you don't have the business context. Leave it as `[CONFIRM]`. |
 | "I'll put `[CONFIRM]` in the AC since the underlying decision isn't made yet." | The AC is the merge contract. If the contract has unresolved questions, the issue isn't ready. Hoist the question to Spec, settle it, then write the AC. |
+| "More AC items make verification more thorough." | More ACs invite mechanical box-ticking. 3 outcome-level ACs ("matches design at &lt;link&gt;") force the reviewer to compare end-to-end and catch errors that fall between row-level checks. |
+| "I'll list every Spec row in AC so nothing gets missed." | If Spec is the source of truth, restating each row in AC duplicates the contract and tempts the reviewer to skip the design comparison. Trust Spec; verify outcomes. |
