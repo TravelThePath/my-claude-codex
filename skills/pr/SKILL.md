@@ -29,7 +29,7 @@ Still ask before:
 
 ### Branch
 
-- Format: `app-XXXXX-short-description` (lowercase `app`, kebab-case). The `app-XXXXX` prefix auto-links the branch to the Linear issue.
+- Format: `app-XXXXX-*` or `*-APP-XXXXX-*` (where `*` is a wildcard).
 - On PR create, if the branch doesn't match: proceed but warn once that Linear auto-link won't fire.
 - Issue ID inference: args -> branch -> commit messages -> current session's explicit issue context. Do not infer from stale memory.
 
