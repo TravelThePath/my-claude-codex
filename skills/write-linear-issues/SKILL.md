@@ -7,7 +7,7 @@ description: Use when drafting a Linear engineering issue (feature, refactor, sc
 
 ## Overview
 
-An engineering issue is an *intent contract*, not a merge contract. It tells reviewers *why* and implementers *what is in scope*. Implementation details (SQL, proto signatures, code) belong in the PR — they freeze the issue prematurely if they show up here.
+An engineering issue is an _intent contract_, not a merge contract. It tells reviewers _why_ and implementers _what is in scope_. Implementation details (SQL, proto signatures, code) belong in the PR — they freeze the issue prematurely if they show up here.
 
 **Default output is Context + Scope only.** Out of scope and Acceptance Criteria add noise to most issues and are written only when the user explicitly asks for them.
 
@@ -19,28 +19,28 @@ An engineering issue is an *intent contract*, not a merge contract. It tells rev
 
 ### When NOT to use
 
-| Issue type | Use instead |
-| --- | --- |
-| Bug | Bug template — repro / current / expected / environment. |
-| Incident retro | Postmortem template — timeline / impact / root cause / actions. |
-| Spike or research | Research template — question / approach / timebox / deliverable. |
-| Product / feature scoping (pre-engineering) | A scoping doc, not an issue. |
+| Issue type                                  | Use instead                                                      |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| Bug                                         | Bug template — repro / current / expected / environment.         |
+| Incident retro                              | Postmortem template — timeline / impact / root cause / actions.  |
+| Spike or research                           | Research template — question / approach / timebox / deliverable. |
+| Product / feature scoping (pre-engineering) | A scoping doc, not an issue.                                     |
 
 ## Sections
 
 **Default output:**
 
-| Section | Reader | Question |
-| --- | --- | --- |
-| Context | reviewer / future maintainer | Why does this exist? Who is blocked? Why now? |
-| Scope | implementer / reviewer | What is in this issue? (At the contract level — name fields, endpoints, pages.) |
+| Section | Reader                       | Question                                                                        |
+| ------- | ---------------------------- | ------------------------------------------------------------------------------- |
+| Context | reviewer / future maintainer | Why does this exist? Who is blocked? Why now?                                   |
+| Scope   | implementer / reviewer       | What is in this issue? (At the contract level — name fields, endpoints, pages.) |
 
 **On request only:**
 
-| Section | Reader | Question |
-| --- | --- | --- |
-| Out of scope | PM / triage | What is NOT in this issue, and where does it live instead? |
-| Acceptance Criteria | reviewer / implementer | How do we know it's done? |
+| Section             | Reader                 | Question                                                   |
+| ------------------- | ---------------------- | ---------------------------------------------------------- |
+| Out of scope        | PM / triage            | What is NOT in this issue, and where does it live instead? |
+| Acceptance Criteria | reviewer / implementer | How do we know it's done?                                  |
 
 A sentence that doesn't answer its section's question for its section's reader belongs somewhere else — or nowhere.
 
@@ -50,23 +50,23 @@ A sentence that doesn't answer its section's question for its section's reader b
 
 Context locates the problem on surfaces that **already exist** ("the `accounts` admin list is unscannable"). It does NOT name fields, endpoints, or components **introduced by this issue** — those belong in Scope.
 
-| ✓ OK in Context | ✗ Belongs in Scope |
-| --- | --- |
-| "Operations cannot scan the `accounts` admin list" | "We're adding `is_archived` to `accounts`" |
-| "The `ListAccounts` API currently returns all rows" | "Add an `include_archived` flag to `ListAccounts`" |
-| "There is no soft-delete pattern in this service yet" | "Introduce an `archived_at` timestamp convention" |
+| ✓ OK in Context                                       | ✗ Belongs in Scope                                 |
+| ----------------------------------------------------- | -------------------------------------------------- |
+| "Operations cannot scan the `accounts` admin list"    | "We're adding `is_archived` to `accounts`"         |
+| "The `ListAccounts` API currently returns all rows"   | "Add an `include_archived` flag to `ListAccounts`" |
+| "There is no soft-delete pattern in this service yet" | "Introduce an `archived_at` timestamp convention"  |
 
 ### Scope — the what / how boundary
 
-Scope names *what is in this issue* using business language. It does NOT specify *how to code it*. Behavior-bearing constraints stay; encoding mechanics go to the PR.
+Scope names _what is in this issue_ using business language. It does NOT specify _how to code it_. Behavior-bearing constraints stay; encoding mechanics go to the PR.
 
-| Domain | ✓ Stays (intent / contract) | ⚠️ State as behavior, not mechanism | ✗ Belongs in PR |
-| --- | --- | --- | --- |
-| DB schema | Field name + business meaning; required/optional; uniqueness; cardinality | "Existing rows are treated as active" (not `DEFAULT FALSE`); "deleted records keep history" (not `ON DELETE CASCADE`) | Column types, index names, ALTER statements |
-| gRPC / GraphQL | Field name + purpose; required/optional; pagination/sort contract; error categories (`NotFound` / `PermissionDenied`) | "Default excludes archived rows" (not `WHERE is_archived=false`) | proto signatures, field numbers, resolver code |
-| UI | New / modified pages, components, actions; permission boundaries | "Archive action is admin-only" (not `useAuth().isAdmin`) | Component code, props shape, CSS |
-| Authorization | Who can call / see what / which error | "Non-admin callers receive `PermissionDenied`" (not `requireRole()` calls) | RBAC config code |
-| Migration semantics | How existing data is treated; whether dual-write/read is needed | "Backfill treats NULL as active" (not `UPDATE … SET is_archived=false`) | Backfill scripts, batch sizes |
+| Domain              | ✓ Stays (intent / contract)                                                                                           | ⚠️ State as behavior, not mechanism                                                                                   | ✗ Belongs in PR                                |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| DB schema           | Field name + business meaning; required/optional; uniqueness; cardinality                                             | "Existing rows are treated as active" (not `DEFAULT FALSE`); "deleted records keep history" (not `ON DELETE CASCADE`) | Column types, index names, ALTER statements    |
+| gRPC / GraphQL      | Field name + purpose; required/optional; pagination/sort contract; error categories (`NotFound` / `PermissionDenied`) | "Default excludes archived rows" (not `WHERE is_archived=false`)                                                      | proto signatures, field numbers, resolver code |
+| UI                  | New / modified pages, components, actions; permission boundaries                                                      | "Archive action is admin-only" (not `useAuth().isAdmin`)                                                              | Component code, props shape, CSS               |
+| Authorization       | Who can call / see what / which error                                                                                 | "Non-admin callers receive `PermissionDenied`" (not `requireRole()` calls)                                            | RBAC config code                               |
+| Migration semantics | How existing data is treated; whether dual-write/read is needed                                                       | "Backfill treats NULL as active" (not `UPDATE … SET is_archived=false`)                                               | Backfill scripts, batch sizes                  |
 
 **Two-question heuristic** for each Scope line:
 
@@ -131,15 +131,19 @@ endpoints, or components introduced by this issue.>
 Use only the sub-headings that apply; drop the rest.>
 
 ### Schema
+
 - <"Add Y field on entity X, meaning Z. Required/optional. Existing rows treated as ...">
 
 ### API
+
 - <"Add / modify field Y on RpcA / QueryB, used for Z. Default behavior is ...">
 
 ### UI
+
 - <"Add / modify action Y on page X. Visible to <role>.">
 
 ### Behavior
+
 - <"X behavior now Y. Edge: <case> returns <error>.">
 ```
 
@@ -184,16 +188,18 @@ admin list can filter archived rows. Index on the column to keep filters cheap.
 ## Scope
 
 ### Schema
+
 - `ALTER TABLE accounts ADD COLUMN is_archived BOOLEAN NOT NULL DEFAULT FALSE;`
 - `CREATE INDEX accounts_is_archived_idx ON accounts(is_archived);`
 
 ### API
+
 - Add `bool include_archived = 5` to `ListAccountsRequest`.
 ```
 
 What went wrong:
 
-- **Context** is a snapshot of the implementation (`is_archived`, `BOOLEAN`, `DEFAULT FALSE`, index name) — a reviewer next year doesn't need any of it; it also names a field this issue is *introducing*, not an existing surface.
+- **Context** is a snapshot of the implementation (`is_archived`, `BOOLEAN`, `DEFAULT FALSE`, index name) — a reviewer next year doesn't need any of it; it also names a field this issue is _introducing_, not an existing surface.
 - **Scope** specifies SQL and a proto field number — locks implementation choices the PR should be free to refine.
 
 ### ✓ Good — intent only, contract-level details preserved
@@ -201,32 +207,28 @@ What went wrong:
 ```markdown
 ## Context
 
-Operations cannot remove dormant accounts from their working list, which
-currently shows ~3k entries and is unscannable. We need a soft-archive
-mechanism so the existing accounts admin list can hide archived rows
-without deleting history. No prior soft-archive pattern exists in this
-service.
+Operations cannot remove dormant accounts from their working list, which currently shows ~3k entries and is unscannable. We need a soft-archive mechanism so the existing accounts admin list can hide archived rows without deleting history. No prior soft-archive pattern exists in this service.
 
 ## Scope
 
 ### Schema
-- Add an archive flag on the `accounts` entity. The flag is required —
-  no NULL state. Existing rows are treated as active.
+
+- Add an archive flag on the `accounts` entity. The flag is required — no NULL state. Existing rows are treated as active.
 
 ### API
-- `ListAccounts` accepts an opt-in flag to include archived accounts.
-  Default behavior excludes them; existing callers see no change.
-- Non-admin callers passing the include-archived flag receive
-  `PermissionDenied`.
+
+- `ListAccounts` accepts an opt-in flag to include archived accounts. Default behavior excludes them; existing callers see no change.
+- Non-admin callers passing the include-archived flag receive `PermissionDenied`.
 
 ### Behavior
+
 - Archived accounts no longer appear in the admin list by default.
 - Sort order and pagination semantics are unchanged when the flag is absent.
 ```
 
 Why this works:
 
-- **Context** explains *who is blocked* (operations) and *why now* (3k entries, unscannable). It names the existing `accounts` admin list (allowed — already exists) but no new field, no column types, no index names. The "no prior soft-archive pattern" line is grounding output, not motivation.
+- **Context** explains _who is blocked_ (operations) and _why now_ (3k entries, unscannable). It names the existing `accounts` admin list (allowed — already exists) but no new field, no column types, no index names. The "no prior soft-archive pattern" line is grounding output, not motivation.
 - **Scope** preserves contract-bearing details — required-ness, existing-row migration semantics, auth boundary, default behavior — without specifying SQL, proto field numbers, or code.
 - **Out of scope and Acceptance Criteria are absent** — they're opt-in. Append them following the Optional sections template only when the user explicitly asks ("include OoS", "what's the AC").
 - **State on create**: `Todo`. **Labels on create**: `AI` (attached by default). Story point: not estimated unless the user asks.
