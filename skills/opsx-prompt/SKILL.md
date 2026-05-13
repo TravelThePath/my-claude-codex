@@ -1,9 +1,13 @@
 ---
 name: opsx-prompt
 description: >
-  Use when the user asks for an opsx:new prompt from a Linear issue or short
-  freeform change request, or asks for deep review, deep discovery, extra
-  confidence, a second look, or missed considerations before opsx:new.
+  Use when drafting, generating, preparing, writing, or asking for an
+  opsx:new prompt from a Linear issue (APP-XXXXX) or a freeform change
+  request, including the short-form invocations "opsx APP-XXXXX" and
+  "opsx:new --deep". Also trigger for deep review, deep discovery,
+  extra confidence, a second look, or missed-considerations passes
+  before or alongside opsx:new. Not for full proposal/design/spec
+  work or rollout planning — those need a different flow.
 ---
 
 # Opsx Prompt Generator
