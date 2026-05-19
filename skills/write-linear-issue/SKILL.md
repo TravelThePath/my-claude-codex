@@ -1,5 +1,5 @@
 ---
-name: write-linear-issues
+name: write-linear-issue
 description: Use when creating, writing, drafting, opening, filing, or rewriting a Linear issue or ticket for engineering scope work — feature, refactor, schema change, migration, or infra task. Not for bugs, incidents, or spikes (those use different templates). Also use when an existing issue's Context or Scope has drifted into implementation detail.
 ---
 
